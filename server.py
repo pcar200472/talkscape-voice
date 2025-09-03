@@ -13,14 +13,12 @@ AGENT_ID = os.environ["ELEVENLABS_AGENT_ID"]
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # tighten to your domain in production
+    allow_origins=["*"],   # or your domain in prod
     allow_methods=["*"],
     allow_headers=["*"]
 )
 
-# Serve the frontend (public/index.html)
-app.mount("/", StaticFiles(directory="public", html=True), name="static")
-
+# ✅ Define API routes FIRST
 @app.get("/api/signed-url")
 async def get_signed_url(first_name: str = "Aroha", topic: str = "current needs"):
     url = f"https://api.elevenlabs.io/v1/convai/conversation/get-signed-url?agent_id={AGENT_ID}"
@@ -30,3 +28,6 @@ async def get_signed_url(first_name: str = "Aroha", topic: str = "current needs"
         r.raise_for_status()
         signed_url = r.json()["signed_url"]
     return {"signedUrl": signed_url, "variables": {"first_name": first_name, "topic": topic}}
+
+# ✅ Mount static LAST so it doesn’t shadow /api/*
+app.mount("/", StaticFiles(directory="public", html=True), name="static")
